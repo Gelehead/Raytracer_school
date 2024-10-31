@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\oscar\OneDrive\Escritorio\Univ\Bacc info\IFT3355\Pierre Poulin\A2024\TP2\a24_ift3355_tp2\build\CMakeFiles\f4bfd533d3000e485602f2948f396ee8\link_target.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\oscar\OneDrive\Escritorio\Univ\Bacc info\IFT3355\Pierre Poulin\A2024\TP2\a24_ift3355_tp2\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\oscar\OneDrive\Escritorio\Univ\Bacc info\IFT3355\Pierre Poulin\A2024\TP2\a24_ift3355_tp2\build\CMakeFiles\link_target" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{092EFFE0-C166-364E-B917-AF5C632BBFC4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

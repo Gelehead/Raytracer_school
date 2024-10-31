@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ProjectOutputs>
+    <ProjectOutput>
+      <FullPath>C:\Users\oscar\OneDrive\Escritorio\Univ\Bacc info\IFT3355\Pierre Poulin\A2024\TP2\a24_ift3355_tp2\build\x64\Debug\ZERO_CHECK</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>C:\Users\oscar\OneDrive\Escritorio\Univ\Bacc info\IFT3355\Pierre Poulin\A2024\TP2\a24_ift3355_tp2\build\RAY.exe</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>C:\Users\oscar\OneDrive\Escritorio\Univ\Bacc info\IFT3355\Pierre Poulin\A2024\TP2\a24_ift3355_tp2\build\x64\Debug\link_target</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>C:\Users\oscar\OneDrive\Escritorio\Univ\Bacc info\IFT3355\Pierre Poulin\A2024\TP2\a24_ift3355_tp2\build\x64\Debug\ALL_BUILD</FullPath>
+    </ProjectOutput>
+  </ProjectOutputs>
+  <ContentFiles />
+  <SatelliteDlls />
+  <NonRecipeFileRefs />
+</Project>

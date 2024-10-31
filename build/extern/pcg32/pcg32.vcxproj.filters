@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="C:\Users\oscar\OneDrive\Escritorio\Univ\Bacc info\IFT3355\Pierre Poulin\A2024\TP2\a24_ift3355_tp2\extern\pcg32\pcg32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\oscar\OneDrive\Escritorio\Univ\Bacc info\IFT3355\Pierre Poulin\A2024\TP2\a24_ift3355_tp2\extern\pcg32\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{44436F9D-B29A-301C-BB95-364DBD372289}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

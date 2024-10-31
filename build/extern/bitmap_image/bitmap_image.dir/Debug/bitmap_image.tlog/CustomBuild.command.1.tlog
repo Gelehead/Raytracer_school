@@ -1,0 +1,10 @@
+^C:\USERS\OSCAR\ONEDRIVE\ESCRITORIO\UNIV\BACC INFO\IFT3355\PIERRE POULIN\A2024\TP2\A24_IFT3355_TP2\EXTERN\BITMAP_IMAGE\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/Users/oscar/OneDrive/Escritorio/Univ/Bacc info/IFT3355/Pierre Poulin/A2024/TP2/a24_ift3355_tp2" "-BC:/Users/oscar/OneDrive/Escritorio/Univ/Bacc info/IFT3355/Pierre Poulin/A2024/TP2/a24_ift3355_tp2/build" --check-stamp-file "C:/Users/oscar/OneDrive/Escritorio/Univ/Bacc info/IFT3355/Pierre Poulin/A2024/TP2/a24_ift3355_tp2/build/extern/bitmap_image/CMakeFiles/generate.stamp"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

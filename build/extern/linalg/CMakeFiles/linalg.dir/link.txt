@@ -1,0 +1,2 @@
+C:\msys64\mingw64\bin\ar.exe qc liblinalg.a
+C:\msys64\mingw64\bin\ranlib.exe liblinalg.a
