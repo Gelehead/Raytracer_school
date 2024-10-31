@@ -80,7 +80,7 @@ AABB Quad::compute_aabb() {
 // @@@@@@ MY CODE HERE
 // equation of a quad, corresponds to {Ax, By, Cz};
 double4 Quad::getEquation(){
-	return {0,0,0};
+	return {0,0,0,0};
 }
 
 // @@@@@@ VOTRE CODE ICI

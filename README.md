@@ -1,7 +1,9 @@
 Oscar Lavolet 20242868
 
+# Raytracer
+This project has been done in the IFT3355 class, it should support every feature mentionned [here](a24_ift3355_tp2.pdf).
 
-
+Ideally, the project is expanded to be a raytracing game engine for small games to be developped with a friend, see [this]() or [that]() as ideas that could be implemented in the future
 
 
 ## Notes about the code
@@ -50,11 +52,45 @@ if (objects[i]->intersect(ray, t_min, closest_t, &Ihit)){
 }
 ```
 
+### advancements and important parts
+#### functionnal
+ - None
+
+#### Done ?
+ - jittery camera
+ - Naive intersection
+ - sphere collision and AABB definition
+ - quad intersection and AABB definition
+
+#### Left to do 
+ - Cylinder collision and AABB definition
+ - mesh collision and AABB definition
+ - AABB 
+    - retrieve corners
+    - construct aabb
+    - compute aabb
+    - intersect
+ - BVH
+ - Shading
+    - eclairage local
+    - eclairage local 
+    - ombres
+    - Reflexion
+        - reflection mirroir
+        - refraction
+    - Textures
+        - UV mapping
+        - Couleur
+ - DOF
+
 ## Important to understand the code
 
 ### Sphere intersection
 The formula with "h" coming from the [raytracing in one weekend](https://raytracing.github.io/books/RayTracingInOneWeekend.html) :
 ![simpler sphere intersection](simpler_sphere_intersection.png)
+
+
+
 
 ## trucs a faire gaffe 
 
