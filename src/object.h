@@ -195,13 +195,15 @@ public:
     
     Quad(double s) : half_size(s){};
 
-    // equation of a quad, corresponds to {Ax, By, Cz, 1};
-    // can extract the equation from 
+    // can extract the equation from the normal and a point on the plane
     double3 world_normal = mul(transform, {0,0,1,1}).xyz();
+    double4 equation = getEquation();
 
     //À adapter pour le plan
     virtual AABB compute_aabb();
-    virtual double3 getEquation();
+
+    // equation of a quad, corresponds to {Ax, By, Cz, D};
+    virtual double4 getEquation();
 protected:
     //À adapter pour le plan
     virtual bool local_intersect(Ray const ray, double t_min, double t_max, Intersection* hit);

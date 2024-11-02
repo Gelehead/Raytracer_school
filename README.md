@@ -52,6 +52,13 @@ if (objects[i]->intersect(ray, t_min, closest_t, &Ihit)){
 }
 ```
 
+Object.cpp
+```
+//DOUBT: shouldnt there be some calculations to be made ??
+hit->normal = world_normal;
+```
+
+
 ### advancements and important parts
 #### functionnal
  - None

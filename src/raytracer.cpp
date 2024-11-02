@@ -17,7 +17,7 @@ void Raytracer::render(const Scene& scene, Frame* output)
 	// Notez que votre code de caméra ne doit pas être basé sur ce code de caméra. Ce code n’est là que pour prendre en compte le développement initial du test d’intersection.
 	// Pour utiliser cette caméra, vous devez supprimer les commentaires qui rendent inactive cette partie du code, et mettre en commentaires la boucle d’image originale.
 
-	CameraOrthographic camOrth;
+/* 	CameraOrthographic camOrth;
 	double3 uVec{ 0,1,0 };
 	double3 vVec{ 0,0,1 };
 	double y_shift = 2.0 / scene.resolution[1];
@@ -32,7 +32,13 @@ void Raytracer::render(const Scene& scene, Frame* output)
 			double3 color{ 0,0,0 };
 
 			Intersection hit;
-			double3 rayOrigin = camOrth.minPosition + uVec * x_shift * x + vVec * y_shift * y;
+
+			double3 offset = {-0.3,-0.5,0.5};
+
+			double3 rayOrigin = camOrth.minPosition
+			+ uVec * x_shift * x 
+			+ vVec * y_shift * y
+			+ offset;
 			double3 rayDirection{ 1,0,0 };
 			Ray ray = Ray(rayOrigin, rayDirection);
 			double itHits = 0;
@@ -40,29 +46,82 @@ void Raytracer::render(const Scene& scene, Frame* output)
 			double z_depth = scene.camera.z_far;
 			if (scene.container->intersect(ray, EPSILON, z_depth, &hit)) {
 				Material& material = ResourceManager::Instance()->materials[hit.key_material];
-				color = material.color_albedo;
+				color = hit.normal;
 				itHits = 1.0f;
 			}
 
 			output->set_color_pixel(x, y, color);
 			output->set_depth_pixel(x, y, itHits);
 		}
+	} */
+
+
+// ----------------------------------------------------- //
+
+	Camera cam;
+	double3 uVec{ 0,1,0 };
+	double3 vVec{ 0,0,1 };
+	double delta_v = 2.0 / scene.resolution[1];
+	double delta_u = 2.0 / scene.resolution[0];
+
+	for (int y = 0; y < scene.resolution[1]; y++) {
+		if (y % 40) {
+			std::cout << "\rScanlines completed: " << y << "/" << scene.resolution[1] << '\r';
+		}
+
+		for (int x = 0; x < scene.resolution[0]; x++) {
+			double3 average_color{ 0,0,0 };
+			double average_z_depth = 0;
+
+			Intersection hit;
+
+			for (size_t i = 0; i < scene.samples_per_pixel; i++)
+			{
+				double3 color = {0,0,0};
+				double depth = 0;
+
+				double jitterU = (rand_double_signed() / 2) * delta_u;
+				double jitterV = (rand_double_signed() / 2) * delta_v;
+
+				double3 jitter = {0,jitterU, jitterV};
+				double3 offset = {-1,0,0.1};
+
+				double3 rayOrigin = cam.center
+				+ uVec * delta_u * x 
+				+ vVec * delta_v * y
+				+ jitter
+				+ offset;
+				double3 rayDirection{ 1,0,0 };
+
+				Ray ray = Ray(rayOrigin, rayDirection);
+
+				trace(scene, ray, 0, &color, &depth);
+
+				average_color += color;
+				average_z_depth += depth;
+			}
+
+			average_color = average_color / scene.samples_per_pixel;
+			average_z_depth / scene.samples_per_pixel;
+
+			output->set_color_pixel(x, y, average_color);
+			output->set_depth_pixel(x, y, (average_z_depth - scene.camera.z_near) / 
+										(scene.camera.z_far-scene.camera.z_near));
+		}
 	}
 
 	//---------------------------------------------------------------------------------------------------------------
 
-/* 
-	// @@@@@@ VOTRE CODE ICI
+
+/* 	// @@@@@@ VOTRE CODE ICI
 	// Calculez les paramètres de la caméra pour les rayons.
 	Camera cam;
 	// DOUBT: why is it *2* / resolution instead of 1
-	double delta_u  = 2 / scene.resolution[0];
-	double delta_v = 2 / scene.resolution[1];
+	double delta_u  = 2.0 / scene.resolution[0];
+	double delta_v = 2.0 / scene.resolution[1];
 	// why are u and v correspondances for y and z ??
 	double3 uVec = {0,1,0};
 	double3 vVec = {0,0,1};
-	// small ( (-0.5, 0.5) ) offset within the pixel (note: that gives a radius and the pixel is squared, no?)
-	double3 jitter;
 	
 
     // Itère sur tous les pixels de l'image.
@@ -78,21 +137,26 @@ void Raytracer::render(const Scene& scene, Frame* output)
 			double3 rayOrigin = cam.center
 				+ uVec * delta_u * x
 				+ vVec * delta_v * y;
-			// DOUBT : why is it x=1, shouldnt it depend on the jitter 
-			double3 rayDirection = { 0,0,-1 };
+			double3 rayDirection = {1,0,0};
 			
 			for(int iray = 0; iray < scene.samples_per_pixel; iray++) {
 				// RAY CREATION
+				// tf ??
 				int ray_depth = 0;
 				double z_depth = 0;
 				double3 ray_color = {0,0,0};
-				jitter = double3(0, rand_double_signed() / 2, rand_double_signed() / 2);
-				rayOrigin += jitter;
+
+
+				double jitterU = delta_u * (rand_double_signed() / 2);
+				double jitterV = delta_v * (rand_double_signed() / 2);
+
+				double3 jitter = double3(0, jitterU, jitterV);
+
+				rayOrigin = rayOrigin + jitter;
+
 				Ray ray = Ray(rayOrigin, rayDirection);
 
-				//print_double3(ray_color);
 				trace(scene, ray, ray_depth, &ray_color, &z_depth);
-				//print_double3(ray_color);
 
 				avg_ray_color += ray_color;
 				avg_z_depth += z_depth;
@@ -106,14 +170,16 @@ void Raytracer::render(const Scene& scene, Frame* output)
 				avg_z_depth < z_buffer[x + y*scene.resolution[0]]) {
 				z_buffer[x + y*scene.resolution[0]] = avg_z_depth;
 
+				std::cout << "hit resolved" << std::endl;
+
 				// Met à jour la couleur de l'image (et sa profondeur)
 				output->set_color_pixel(x, y, avg_ray_color);
 				output->set_depth_pixel(x, y, (avg_z_depth - scene.camera.z_near) / 
 										(scene.camera.z_far-scene.camera.z_near));
 			}
         } 
-    }
-	*/
+    } */
+	
 
     delete[] z_buffer;
 
@@ -135,13 +201,13 @@ void Raytracer::trace(const Scene& scene,
 	Intersection hit;
 	// Fait appel à l'un des containers spécifiées.
 	if(scene.container->intersect(ray, EPSILON, *out_z_depth, &hit)) {
-		std::cout << "hit" << std::endl;
-		Material& material = ResourceManager::Instance()->materials[hit.key_material];
 
+		Material& material = ResourceManager::Instance()->materials[hit.key_material];
 		double3 ambiant_color = {0.1, 0.1, 0.1};
+
 		
 		//*out_color += material.color_albedo;
-		*out_color += ambiant_color;
+		*out_color += hit.normal;
 		*out_z_depth += hit.depth; 
 
 

@@ -18,11 +18,11 @@ bool Sphere::local_intersect(Ray ray, double t_min, double t_max, Intersection *
     // Sphere centered at (0,0,0) in local space, ray origin transformed to local space.
     double3 oc = -ray.origin;
 
-    double a = length_squared(ray.direction);
-    double h = dot(ray.direction, oc);
-    double c = length_squared(oc) - radius * radius;
+    double a = dot(ray.direction, ray.direction);
+    double b = -2.0 * dot(ray.direction, oc);
+    double c = dot(oc, oc) - radius * radius;
 
-    double discriminant = h * h - a * c;
+    double discriminant = b*b * 4 * a * c ;
     if (discriminant < 0) {
         return false;
     }
@@ -30,13 +30,14 @@ bool Sphere::local_intersect(Ray ray, double t_min, double t_max, Intersection *
     double sqrtd = std::sqrt(discriminant);
 
     // Find the nearest root within the acceptable range
-    double root = (h - sqrtd) / a;
-    if (!(t_min < root && root < t_max)) {
-        root = (h + sqrtd) / a;
-        if (!(t_min < root && root < t_max)) {
+    double root = (b - sqrtd) / 2* a;
+    if (!(t_min < root || root < t_max)) {
+        root = (b + sqrtd) / 2*a;
+        if (!(t_min < root || root < t_max)) {
             return false;
         }
     }
+
 
     hit->depth = root;
     // Intersection position calculation: position = origin + t * direction
@@ -66,6 +67,22 @@ AABB Sphere::compute_aabb() {
 // Pour plus de d'informations sur la géométrie, référez-vous à la classe object.h.
 bool Quad::local_intersect(Ray ray, double t_min, double t_max, Intersection *hit)
 {
+	double A = equation.x;
+	double B = equation.y;
+	double C = equation.z;
+	double D = equation.w;
+
+	// prevent division by zero
+	double denominator = A * ray.direction.x + B * ray.direction.y + C * ray.direction.z;
+	if ( std::abs(denominator) < EPSILON ){return false;}
+
+	// depth
+	double t = -(A*ray.origin.x + B * ray.origin.y + C * ray.origin.z + D) / denominator;
+
+	hit->depth = t;
+	hit->position = ray.origin + t * ray.direction;
+	//DOUBT: shouldnt there be some calculations to be made ??
+	hit->normal = world_normal;
 	return false;
 }
 
@@ -80,6 +97,7 @@ AABB Quad::compute_aabb() {
 // @@@@@@ MY CODE HERE
 // equation of a quad, corresponds to {Ax, By, Cz};
 double4 Quad::getEquation(){
+	double3 quad_center = mul(transform, {0,0,0,1}).xyz();
 	return {0,0,0,0};
 }
 
