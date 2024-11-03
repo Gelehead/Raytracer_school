@@ -64,6 +64,26 @@ void Raytracer::render(const Scene& scene, Frame* output)
 	double delta_v = 2.0 / scene.resolution[1];
 	double delta_u = 2.0 / scene.resolution[0];
 
+	double3 lookAt = normalize(scene.camera.center - scene.camera.up); // où la caméra regarde
+    double3 rightCamera = normalize(cross(lookAt, scene.camera.up)); // la droite de la caméra
+    double3 upCamera = normalize(cross(rightCamera, lookAt)); // le haut de l'image
+
+	double3 image_center = lookAt * scene.camera.z_near;
+
+	double image_height = deg2rad(tan(scene.camera.fovy)) * scene.camera.z_near;
+	double image_length = image_height * scene.camera.aspect;
+
+	double3 minPos = (-upCamera * (0.5 * image_height)) 
+				   + (-rightCamera * (0.5 * image_length)) 
+				   + delta_u 
+				   + delta_v;
+	
+	
+
+
+
+
+
 	for (int y = 0; y < scene.resolution[1]; y++) {
 		if (y % 40) {
 			std::cout << "\rScanlines completed: " << y << "/" << scene.resolution[1] << '\r';

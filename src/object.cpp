@@ -74,7 +74,9 @@ bool Quad::local_intersect(Ray ray, double t_min, double t_max, Intersection *hi
 
 	// prevent division by zero
 	double denominator = A * ray.direction.x + B * ray.direction.y + C * ray.direction.z;
-	if ( std::abs(denominator) < EPSILON ){return false;}
+	if ( std::abs(denominator) < EPSILON ){
+		return false;
+	}
 
 	// depth
 	double t = -(A*ray.origin.x + B * ray.origin.y + C * ray.origin.z + D) / denominator;
@@ -98,7 +100,8 @@ AABB Quad::compute_aabb() {
 // equation of a quad, corresponds to {Ax, By, Cz};
 double4 Quad::getEquation(){
 	double3 quad_center = mul(transform, {0,0,0,1}).xyz();
-	return {0,0,0,0};
+	double D = -(world_normal.x * quad_center.x + world_normal.y * quad_center.y + world_normal.z * quad_center.z);
+	return {world_normal.x,world_normal.y,world_normal.z,D};
 }
 
 // @@@@@@ VOTRE CODE ICI
