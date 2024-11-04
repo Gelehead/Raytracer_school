@@ -16,11 +16,19 @@ static double length_squared(double3 u){
 }
 
 static void print_double3(double3 d){
-	std::cout << "(" << d.x << ", " << d.y << ", " << d.z << ")";
+	std::cout << "(" << d.x << ", " << d.y << ", " << d.z << ")" << std::endl;
 }
 
 static double dot(double3 u, double3 v){
 	return u.x * v.x + u.y * v.y + u.z + v.z;
+}
+
+static double3 le_cross(const double3& a, const double3& b) {
+    return double3(
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x
+    );
 }
 
 // ----------------------- random part -----------------------

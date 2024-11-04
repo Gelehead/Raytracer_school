@@ -55,35 +55,31 @@ void Raytracer::render(const Scene& scene, Frame* output)
 		}
 	} */
 
-
 // ----------------------------------------------------- //
 
 	Camera cam;
-	double3 uVec{ 0,1,0 };
-	double3 vVec{ 0,0,1 };
-	double delta_v = 2.0 / scene.resolution[1];
-	double delta_u = 2.0 / scene.resolution[0];
 
-	double3 lookAt = normalize(scene.camera.center - scene.camera.up); // où la caméra regarde
-    double3 rightCamera = normalize(cross(lookAt, scene.camera.up)); // la droite de la caméra
-    double3 upCamera = normalize(cross(rightCamera, lookAt)); // le haut de l'image
+	double3 lookAt = normalize(scene.camera.center - scene.camera.position);
+	double3 rCcam = normalize(cross(lookAt, scene.camera.up)); 
+    double3 uCam = normalize(cross(rCcam, lookAt));
 
 	double3 image_center = lookAt * scene.camera.z_near;
 
-	double image_height = deg2rad(tan(scene.camera.fovy)) * scene.camera.z_near;
-	double image_length = image_height * scene.camera.aspect;
+	double image_height = tan(deg2rad(scene.camera.fovy)) * scene.camera.z_near;
+	double image_length = image_height / scene.camera.aspect;
 
-	double3 minPos = (-upCamera * (0.5 * image_height)) 
-				   + (-rightCamera * (0.5 * image_length)) 
-				   + delta_u 
-				   + delta_v;
-	
-	
+	double delta_u = image_length / scene.resolution[0];
+	double delta_v = image_height / scene.resolution[1];
 
 
+	double3 minPos = 
+		scene.camera.position
+	  + scene.camera.z_near * lookAt
+	  - uCam * ((0.5 * image_height) + delta_v) 
+	  - rCcam * ((0.5 * image_length) + delta_u)
+	;
 
-
-
+	// loop over every pixel
 	for (int y = 0; y < scene.resolution[1]; y++) {
 		if (y % 40) {
 			std::cout << "\rScanlines completed: " << y << "/" << scene.resolution[1] << '\r';
@@ -104,14 +100,16 @@ void Raytracer::render(const Scene& scene, Frame* output)
 				double jitterV = (rand_double_signed() / 2) * delta_v;
 
 				double3 jitter = {0,jitterU, jitterV};
-				double3 offset = {-1,0,0.1};
 
-				double3 rayOrigin = cam.center
-				+ uVec * delta_u * x 
-				+ vVec * delta_v * y
-				+ jitter
-				+ offset;
-				double3 rayDirection{ 1,0,0 };
+				double3 rayOrigin = cam.position;
+
+				double3 rayDirection = normalize(
+					minPos 
+					+ x * delta_u * rCcam
+					+ y * delta_v * uCam
+					+ jitter
+					- scene.camera.position
+				);
 
 				Ray ray = Ray(rayOrigin, rayDirection);
 
@@ -122,85 +120,21 @@ void Raytracer::render(const Scene& scene, Frame* output)
 			}
 
 			average_color = average_color / scene.samples_per_pixel;
-			average_z_depth / scene.samples_per_pixel;
+			average_z_depth = average_z_depth / scene.samples_per_pixel;
 
-			output->set_color_pixel(x, y, average_color);
-			output->set_depth_pixel(x, y, (average_z_depth - scene.camera.z_near) / 
-										(scene.camera.z_far-scene.camera.z_near));
-		}
-	}
-
-	//---------------------------------------------------------------------------------------------------------------
-
-
-/* 	// @@@@@@ VOTRE CODE ICI
-	// Calculez les paramètres de la caméra pour les rayons.
-	Camera cam;
-	// DOUBT: why is it *2* / resolution instead of 1
-	double delta_u  = 2.0 / scene.resolution[0];
-	double delta_v = 2.0 / scene.resolution[1];
-	// why are u and v correspondances for y and z ??
-	double3 uVec = {0,1,0};
-	double3 vVec = {0,0,1};
-	
-
-    // Itère sur tous les pixels de l'image.
-    for(int y = 0; y < scene.resolution[1]; y++) {
-		if (y % 40){
-			std::cout << "\rScanlines completed: " << y << "/" << scene.resolution[1] << '\r';
-		}
-
-        for(int x = 0; x < scene.resolution[0]; x++) {
-
-			double avg_z_depth = 0;
-			double3 avg_ray_color = {0,0,0};
-			double3 rayOrigin = cam.center
-				+ uVec * delta_u * x
-				+ vVec * delta_v * y;
-			double3 rayDirection = {1,0,0};
-			
-			for(int iray = 0; iray < scene.samples_per_pixel; iray++) {
-				// RAY CREATION
-				// tf ??
-				int ray_depth = 0;
-				double z_depth = 0;
-				double3 ray_color = {0,0,0};
-
-
-				double jitterU = delta_u * (rand_double_signed() / 2);
-				double jitterV = delta_v * (rand_double_signed() / 2);
-
-				double3 jitter = double3(0, jitterU, jitterV);
-
-				rayOrigin = rayOrigin + jitter;
-
-				Ray ray = Ray(rayOrigin, rayDirection);
-
-				trace(scene, ray, ray_depth, &ray_color, &z_depth);
-
-				avg_ray_color += ray_color;
-				avg_z_depth += z_depth;
-			}
-
-			avg_z_depth = avg_z_depth / scene.samples_per_pixel;
-			avg_ray_color = avg_ray_color / scene.samples_per_pixel;
-
-			// Test de profondeur
-			if(avg_z_depth >= scene.camera.z_near && avg_z_depth <= scene.camera.z_far && 
-				avg_z_depth < z_buffer[x + y*scene.resolution[0]]) {
-				z_buffer[x + y*scene.resolution[0]] = avg_z_depth;
+			if(average_z_depth >= scene.camera.z_near && average_z_depth <= scene.camera.z_far && 
+				average_z_depth < z_buffer[x + y*scene.resolution[0]]) {
+				z_buffer[x + y*scene.resolution[0]] = average_z_depth;
 
 				std::cout << "hit resolved" << std::endl;
 
 				// Met à jour la couleur de l'image (et sa profondeur)
-				output->set_color_pixel(x, y, avg_ray_color);
-				output->set_depth_pixel(x, y, (avg_z_depth - scene.camera.z_near) / 
+				output->set_color_pixel(x, y, average_color);
+				output->set_depth_pixel(x, y, (average_z_depth - scene.camera.z_near) / 
 										(scene.camera.z_far-scene.camera.z_near));
 			}
-        } 
-    } */
-	
-
+		}
+	}
     delete[] z_buffer;
 
 }
