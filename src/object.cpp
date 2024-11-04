@@ -22,7 +22,7 @@ bool Sphere::local_intersect(Ray ray, double t_min, double t_max, Intersection *
     double b = -2.0 * dot(ray.direction, oc);
     double c = dot(oc, oc) - radius * radius;
 
-    double discriminant = b*b * 4 * a * c ;
+    double discriminant = b*b - 4 * a * c ;
     if (discriminant < 0) {
         return false;
     }
