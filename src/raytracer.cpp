@@ -57,30 +57,47 @@ void Raytracer::render(const Scene& scene, Frame* output)
 
 // ----------------------------------------------------- //
 
+	// initializing
 	Camera cam = scene.camera;
 
-	double3 lookAt = normalize(scene.camera.center-scene.camera.position);
-	double3 rCcam = normalize(cross(lookAt, scene.camera.up)); 
-    double3 uCam = normalize(cross(rCcam, lookAt));
+	double aspect_ratio = scene.camera.aspect;
 
-	double3 image_center = cam.position + (lookAt * scene.camera.z_near);
+	double3 lookfrom = scene.camera.position;
+	double3 cam_target = scene.camera.center;
 
-	double image_height = 2 * (tan(deg2rad(scene.camera.fovy / 2)) * scene.camera.z_near);
-	double image_length = image_height * scene.camera.aspect;
+	double3 lookAt = normalize(lookfrom - cam_target);
+	double3 rCam = normalize(cross(scene.camera.up, lookAt)); 
+    double3 uCam = normalize(cross(lookAt, rCam));
 
-	double delta_u = image_length / scene.resolution[0];
-	double delta_v = image_height / scene.resolution[1];
+	// viewport dimensions
+	//	double viewport_height = 2 * (scene.camera.z_near * (deg2rad(scene.camera.fovy)));
+	double focal_length = std::sqrt(length_squared(lookfrom - cam_target));
+	double theta = deg2rad(cam.fovy);
+	double h = std::tan(theta/2);
+	double viewport_height = 2.0 * h * focal_length;
+	double viewport_width = viewport_height * scene.camera.aspect;
 
+	double3 viewport_u = viewport_width * rCam;
+	double3 viewport_v = viewport_height * uCam;
 
-	double3 minPos = 
-		image_center
-	  - uCam *(0.5 * image_height) 
-	  + uCam * (delta_v / 2)
-	  - rCcam * (0.5 * image_length) 
-	  + rCcam * (delta_u / 2)
+	double3 delta_u = viewport_u / scene.resolution[0];
+	double3 delta_v = viewport_v / scene.resolution[1];
+
+	//image dimension
+	double image_width = viewport_width;
+	double image_height = viewport_height;
+	double3 image_center = lookfrom - (lookAt * focal_length);
+
+	double3 viewPort_upper_left = 
+		lookfrom
+	  - focal_length * lookAt
+	  - viewport_u / 2
+	  - viewport_v / 2
+	  + delta_u / 2
+	  + delta_v / 2
 	;
 
-	// loop over every pixel
+	// rendering 
 	for (int y = 0; y < scene.resolution[1]; y++) {
 		if (y % 40) {
 			std::cout << "\rScanlines completed: " << y << "/" << scene.resolution[1] << '\r';
@@ -98,16 +115,16 @@ void Raytracer::render(const Scene& scene, Frame* output)
 				double depth = 0;
 
 				// jitter 
-				double2 jitter2 = random_in_unit_disk();
-				double3 jitter = {0,jitter2.x, jitter2.y};
+				double2 jitter = random_in_unit_disk();;
 
 				// ray construction
-				double3 rayOrigin = cam.position;
+				double3 rayOrigin = lookfrom;
 				double3 rayDirection = normalize(
-					minPos 
-					+ x * delta_u * rCcam
-					+ y * delta_v * uCam
-					+ jitter
+					viewPort_upper_left 
+					+ x * delta_u * rCam 
+					+ y * delta_v * uCam 
+					+ (jitter.x * delta_u)
+					+ (jitter.y * delta_v)
 				);
 
 				Ray ray = Ray(rayOrigin, rayDirection);
@@ -121,19 +138,15 @@ void Raytracer::render(const Scene& scene, Frame* output)
 			average_color = average_color / scene.samples_per_pixel;
 			average_z_depth = average_z_depth / scene.samples_per_pixel;
 
+
 			if(average_z_depth >= scene.camera.z_near && average_z_depth <= scene.camera.z_far && 
 				average_z_depth < z_buffer[x + y*scene.resolution[0]]) {
 				z_buffer[x + y*scene.resolution[0]] = average_z_depth;
-
-				std::cout << " hit " << std::endl;
 
 				// Met à jour la couleur de l'image (et sa profondeur)
 				output->set_color_pixel(x, y, average_color);
 				output->set_depth_pixel(x, y, (average_z_depth - scene.camera.z_near) / 
 										(scene.camera.z_far-scene.camera.z_near));
-			}
-			else{
-				std::cout << "not hit" << std::endl;
 			}
 		}
 	}
