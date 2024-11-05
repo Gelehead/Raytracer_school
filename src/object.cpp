@@ -22,7 +22,7 @@ bool Sphere::local_intersect(Ray ray, double t_min, double t_max, Intersection *
     double b = -2.0 * dot(ray.direction, oc);
     double c = dot(oc, oc) - radius * radius;
 
-    double discriminant = b*b - 4 * a * c ;
+    double discriminant = b*b - 4.0 * a * c ;
     if (discriminant < 0) {
         return false;
     }
@@ -30,10 +30,11 @@ bool Sphere::local_intersect(Ray ray, double t_min, double t_max, Intersection *
     double sqrtd = std::sqrt(discriminant);
 
     // Find the nearest root within the acceptable range
-    double root = (b - sqrtd) / 2* a;
-    if (!(t_min < root || root < t_max)) {
-        root = (b + sqrtd) / 2*a;
-        if (!(t_min < root || root < t_max)) {
+    double root = (b - sqrtd) / (2.0* a);
+	
+    if (root <= t_min || t_max <= root) {
+        root = (b + sqrtd) / (2.0*a);
+        if (root <= t_min || t_max <= root) {
             return false;
         }
     }
@@ -65,42 +66,83 @@ AABB Sphere::compute_aabb() {
 // Référez-vous au PDF pour la paramétrisation des coordonnées UV.
 //
 // Pour plus de d'informations sur la géométrie, référez-vous à la classe object.h.
-bool Quad::local_intersect(Ray ray, double t_min, double t_max, Intersection *hit)
-{
-	double A = equation.x;
-	double B = equation.y;
-	double C = equation.z;
-	double D = equation.w;
+bool Quad::local_intersect(Ray ray, double t_min, double t_max, Intersection *hit) {
+    double A = equation.x;
+    double B = equation.y;
+    double C = equation.z;
+    double D = equation.w;
 
-	// prevent division by zero
-	double denominator = A * ray.direction.x + B * ray.direction.y + C * ray.direction.z;
-	if ( std::abs(denominator) < EPSILON ){
-		return false;
-	}
+    double denominator = A * ray.direction.x + B * ray.direction.y + C * ray.direction.z;
+    if (std::abs(denominator) < EPSILON) {
+        return false;
+    }
 
-	// depth
-	double t = -(A*ray.origin.x + B * ray.origin.y + C * ray.origin.z + D) / denominator;
+    double t = -(A * ray.origin.x + B * ray.origin.y + C * ray.origin.z + D) / denominator;
 
-	hit->depth = t;
-	hit->position = ray.origin + t * ray.direction;
-	//DOUBT: shouldnt there be some calculations to be made ??
-	hit->normal = world_normal;
-	return false;
+    if (!(t_min < t && t < t_max)) {
+        return false;
+    }
+
+    hit->depth = t;
+    hit->position = ray.origin + t * ray.direction;
+
+    // Calculate the intersection point in local space to check within bounds
+    double3 local_hit_pos = mul(i_transform, {hit->position, 1.0}).xyz();
+
+    if (std::abs(local_hit_pos.x) > 0.5 || std::abs(local_hit_pos.y) > 0.5) {
+        return false; 
+    }
+
+    hit->normal = world_normal;
+    return true;
 }
+
 
 // @@@@@@ VOTRE CODE ICI
 // Occupez-vous de compléter cette fonction afin de calculer le AABB pour le quad (rectangle).
 // Il faut que le AABB englobe minimalement notre objet à moins que l'énoncé prononce le contraire.
 AABB Quad::compute_aabb() {
-	return Object::compute_aabb();
-	//return Object::compute_aabb();
+    // Define the quad's vertices in local space (centered around the origin)
+    double3 vertices[4] = {
+        { half_size,  half_size, 0},
+        {-half_size,  half_size, 0},
+        {-half_size, -half_size, 0},
+        { half_size, -half_size, 0}
+    };
+
+    // Transform each vertex to world space
+    double3 world_vertices[4];
+    for (int i = 0; i < 4; ++i) {
+        world_vertices[i] = mul(transform, double4{vertices[i], 1.0}).xyz();
+    }
+
+    // Initialize min and max to the first transformed vertex
+    double3 min = world_vertices[0];
+    double3 max = world_vertices[0];
+
+    // Find the minimum and maximum coordinates
+    for (int i = 1; i < 4; ++i) {
+        min.x = std::min(min.x, world_vertices[i].x);
+        min.y = std::min(min.y, world_vertices[i].y);
+        min.z = std::min(min.z, world_vertices[i].z);
+
+        max.x = std::max(max.x, world_vertices[i].x);
+        max.y = std::max(max.y, world_vertices[i].y);
+        max.z = std::max(max.z, world_vertices[i].z);
+    }
+
+    // Return the AABB with the computed min and max bounds
+    return AABB{min, max};
 }
 
 // @@@@@@ MY CODE HERE
 // equation of a quad, corresponds to {Ax, By, Cz};
 double4 Quad::getEquation(){
 	double3 quad_center = mul(transform, {0,0,0,1}).xyz();
-	double D = -(world_normal.x * quad_center.x + world_normal.y * quad_center.y + world_normal.z * quad_center.z);
+	world_normal = normalize(world_normal);
+    double D = -(world_normal.x * quad_center.x + 
+                 world_normal.y * quad_center.y + 
+                 world_normal.z * quad_center.z);	
 	return {world_normal.x,world_normal.y,world_normal.z,D};
 }
 

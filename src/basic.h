@@ -31,6 +31,16 @@ static double3 le_cross(const double3& a, const double3& b) {
     );
 }
 
+// ----------------------- utils -----------------------
+
+static void print(double a){
+	std::cout << a << std::endl;
+}
+static void print(int a){
+	std::cout << a << std::endl;
+}
+
+
 // ----------------------- random part -----------------------
 
 // Valeur aléatoire entre [0,1)

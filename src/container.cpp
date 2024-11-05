@@ -19,7 +19,7 @@ bool BVH::intersect(Ray ray, double t_min, double t_max, Intersection* hit) {
 // - Retourner l'intersection avec la profondeur maximale la plus PETITE.
 bool Naive::intersect(Ray ray, double t_min, double t_max, Intersection* hit) {
 	bool isHit = false;
-	double closest_t = 0;
+	double closest_t = t_max;
 
 	// iterate over every aabb box
 	for (int i = 0; i < objects.size(); ++i){

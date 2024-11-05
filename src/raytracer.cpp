@@ -37,8 +37,8 @@ void Raytracer::render(const Scene& scene, Frame* output)
 
 			double3 rayOrigin = camOrth.minPosition
 			+ uVec * x_shift * x 
-			+ vVec * y_shift * y
-			+ offset;
+			+ vVec * y_shift * y;
+
 			double3 rayDirection{ 1,0,0 };
 			Ray ray = Ray(rayOrigin, rayDirection);
 			double itHits = 0;
@@ -57,26 +57,27 @@ void Raytracer::render(const Scene& scene, Frame* output)
 
 // ----------------------------------------------------- //
 
-	Camera cam;
+	Camera cam = scene.camera;
 
-	double3 lookAt = normalize(scene.camera.center - scene.camera.position);
+	double3 lookAt = normalize(scene.camera.center-scene.camera.position);
 	double3 rCcam = normalize(cross(lookAt, scene.camera.up)); 
     double3 uCam = normalize(cross(rCcam, lookAt));
 
-	double3 image_center = lookAt * scene.camera.z_near;
+	double3 image_center = cam.position + (lookAt * scene.camera.z_near);
 
-	double image_height = tan(deg2rad(scene.camera.fovy)) * scene.camera.z_near;
-	double image_length = image_height / scene.camera.aspect;
+	double image_height = 2 * (tan(deg2rad(scene.camera.fovy / 2)) * scene.camera.z_near);
+	double image_length = image_height * scene.camera.aspect;
 
 	double delta_u = image_length / scene.resolution[0];
 	double delta_v = image_height / scene.resolution[1];
 
 
 	double3 minPos = 
-		scene.camera.position
-	  + scene.camera.z_near * lookAt
-	  - uCam * ((0.5 * image_height) + delta_v) 
-	  - rCcam * ((0.5 * image_length) + delta_u)
+		image_center
+	  - uCam *(0.5 * image_height) 
+	  + uCam * (delta_v / 2)
+	  - rCcam * (0.5 * image_length) 
+	  + rCcam * (delta_u / 2)
 	;
 
 	// loop over every pixel
@@ -96,19 +97,17 @@ void Raytracer::render(const Scene& scene, Frame* output)
 				double3 color = {0,0,0};
 				double depth = 0;
 
-				double jitterU = (rand_double_signed() / 2) * delta_u;
-				double jitterV = (rand_double_signed() / 2) * delta_v;
+				// jitter 
+				double2 jitter2 = random_in_unit_disk();
+				double3 jitter = {0,jitter2.x, jitter2.y};
 
-				double3 jitter = {0,jitterU, jitterV};
-
+				// ray construction
 				double3 rayOrigin = cam.position;
-
 				double3 rayDirection = normalize(
 					minPos 
 					+ x * delta_u * rCcam
 					+ y * delta_v * uCam
 					+ jitter
-					- scene.camera.position
 				);
 
 				Ray ray = Ray(rayOrigin, rayDirection);
@@ -126,12 +125,15 @@ void Raytracer::render(const Scene& scene, Frame* output)
 				average_z_depth < z_buffer[x + y*scene.resolution[0]]) {
 				z_buffer[x + y*scene.resolution[0]] = average_z_depth;
 
-				std::cout << "hit resolved" << std::endl;
+				std::cout << " hit " << std::endl;
 
 				// Met à jour la couleur de l'image (et sa profondeur)
 				output->set_color_pixel(x, y, average_color);
 				output->set_depth_pixel(x, y, (average_z_depth - scene.camera.z_near) / 
 										(scene.camera.z_far-scene.camera.z_near));
+			}
+			else{
+				std::cout << "not hit" << std::endl;
 			}
 		}
 	}
@@ -154,15 +156,13 @@ void Raytracer::trace(const Scene& scene,
 {
 	Intersection hit;
 	// Fait appel à l'un des containers spécifiées.
-	if(scene.container->intersect(ray, EPSILON, *out_z_depth, &hit)) {
-
-		Material& material = ResourceManager::Instance()->materials[hit.key_material];
-		double3 ambiant_color = {0.1, 0.1, 0.1};
-
-		
+	if(scene.container->intersect(ray, EPSILON, scene.camera.z_far, &hit)) {		
 		//*out_color += material.color_albedo;
-		*out_color += hit.normal;
-		*out_z_depth += hit.depth; 
+		Material material = ResourceManager::Instance()->materials[hit.key_material];
+		*out_color   = material.color_albedo;
+		*out_z_depth = hit.depth; 
+
+
 
 
 		// @@@@@@ VOTRE CODE ICI
