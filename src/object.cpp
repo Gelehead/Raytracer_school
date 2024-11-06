@@ -67,29 +67,44 @@ AABB Sphere::compute_aabb() {
 //
 // Pour plus de d'informations sur la géométrie, référez-vous à la classe object.h.
 bool Quad::local_intersect(Ray ray, double t_min, double t_max, Intersection *hit) {
-    double A = equation.x;
-    double B = equation.y;
-    double C = equation.z;
-    double D = equation.w;
+    
+    // Verify if ray hits infinite plane
+    // D is Ax + By + Cz = D
+    double D = dot(world_center, world_normal);
 
-    double denominator = A * ray.direction.x + B * ray.direction.y + C * ray.direction.z;
-    if (std::abs(denominator) < EPSILON) {
+    // handling division by 0
+    double denominator = dot(world_normal, ray.direction);
+    if ( std::abs(denominator) < EPSILON){
         return false;
     }
 
-    double t = -(A * ray.origin.x + B * ray.origin.y + C * ray.origin.z + D) / denominator;
+    double t = (D - dot(world_normal, ray.origin))
+                / denominator
+    ;
 
-    if (!(t_min < t && t < t_max)) {
+    // verify not OOB
+    if (!t < t_min || t > t_max){
         return false;
     }
 
+    // verify if the point is inside the half size of the quad
+    double3 intersection = ray.origin + t * ray.origin;
+    double3 local_intersection = intersection - world_center;
+    
+    // a, b e [0,1]
+    double a = dot(w, cross(local_intersection, local_v));
+    double b = dot(w, cross(local_u, local_intersection));
+    if (!inside(a, b, hit))
+
+    hit->normal = world_normal;
     hit->depth = t;
-    hit->position = ray.origin + t * ray.direction;
+    hit->position = intersection;
 
     // Calculate the intersection point in local space to check within bounds
     double3 local_hit_pos = mul(i_transform, {hit->position, 1.0}).xyz();
 
-    if (std::abs(local_hit_pos.x) > 0.5 || std::abs(local_hit_pos.y) > 0.5) {
+
+    if (std::abs(local_hit_pos.x) > half_size || std::abs(local_hit_pos.y) > half_size) {
         return false; 
     }
 
@@ -135,16 +150,6 @@ AABB Quad::compute_aabb() {
     return AABB{min, max};
 }
 
-// @@@@@@ MY CODE HERE
-// equation of a quad, corresponds to {Ax, By, Cz};
-double4 Quad::getEquation(){
-	double3 quad_center = mul(transform, {0,0,0,1}).xyz();
-	world_normal = normalize(world_normal);
-    double D = -(world_normal.x * quad_center.x + 
-                 world_normal.y * quad_center.y + 
-                 world_normal.z * quad_center.z);	
-	return {world_normal.x,world_normal.y,world_normal.z,D};
-}
 
 // @@@@@@ VOTRE CODE ICI
 // Occupez-vous de compléter cette fonction afin de trouver l'intersection avec un cylindre.

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "linalg/linalg.h"
+#include "object.h"
 #include <string>
 #include <iostream>
 using namespace linalg::aliases;
@@ -39,7 +40,15 @@ static void print(double a){
 static void print(int a){
 	std::cout << a << std::endl;
 }
+static bool contains(double min, double max, double x){
+	return x >= min && x <= max;
+}
+static bool inside(double a, double b, Intersection& hit){
+	if (!contains(0, 1, a) || !contains(0, 1, b)){return false;}
 
+	hit.uv = {a, b};
+	return true;
+}
 
 // ----------------------- random part -----------------------
 

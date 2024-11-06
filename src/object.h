@@ -196,14 +196,25 @@ public:
     Quad(double s) : half_size(s){};
 
     // can extract the equation from the normal and a point on the plane
-    double3 world_normal = mul(transform, {0,0,1,1}).xyz();
-    double4 equation = getEquation();
+    double3 world_center = normalize(mul(transform, {0,0,0,1}).xyz());
+
+    // u and v plane vector
+    double3 local_u = {0,0,half_size};
+    double3 world_u = normalize(mul(transform, {local_u.x, local_u.y, local_u.z, 1}).xyz());
+
+    double3 local_v = {half_size,0,0};
+    double3 world_v = normalize(mul(transform, {local_v.x, local_v.y, local_v.z, 1}).xyz());
+
+    double3 n = cross(local_u, local_v);
+    double3 local_normal = normalize(n);
+    double3 world_normal = normalize(mul(transform, {local_normal.x, local_normal.y, local_normal.z, 1}).xyz());
+
+    // constant used for local calculations
+    double3 w = n / dot(n, n);
+
 
     //À adapter pour le plan
     virtual AABB compute_aabb();
-
-    // equation of a quad, corresponds to {Ax, By, Cz, D};
-    virtual double4 getEquation();
 protected:
     //À adapter pour le plan
     virtual bool local_intersect(Ray const ray, double t_min, double t_max, Intersection* hit);
