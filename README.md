@@ -14,54 +14,61 @@ It is now common among developpers to use AI to code and the AI often uses comme
 However, I tend to also use commentaries to ease the understanding of my code for myself and any other person coming into the project, which could potentially be misinterpreted as blatant AI usage. Please consider this when correcting.
 
 
-## Documentation for debugging
- - potential problem sources --> `"DOUBT: [...] "`
+## trashed code
 
 
-### doubts so far 
-(also good to keep track of progress)
+Quad intersection
+``` c++
+bool Quad::local_intersect(Ray ray, double t_min, double t_max, Intersection *hit) {
+    // Define the plane for the quad with Ax + By + Cz = D
+    double D = dot(center, normal);
 
-
-raytracer.cpp
-```
-// DOUBT: why is it *2* / resolution instead of 1
-double delta_x = 2 / scene.resolution[0];
-double delta_y = 2 / scene.resolution[1];
-// why are u and v correspondances for y and z ??
-double3 uVec = {0,1,0};
-double3 vVec = {0,0,1};
-```
-
-basic.h
-```
-// random value between (-1, 1)  
-static double rand_double_signed() {
-	return (double(rand() / double(RAND_MAX) < 0.5 ? -1 : 1)) * double(rand() / double((RAND_MAX)));
-}
-```
-
-container.cpp
-```
-// DOUBT: shouldn't it search for aabb boxes too or is it already in the "objects" variable?
-if (objects[i]->intersect(ray, t_min, closest_t, &Ihit)){
-    if (Ihit.depth < closest_t){
-        closest_t = Ihit.depth;
-        *hit = Ihit;
-        isHit = true;
+    // Check if the ray is parallel to the plane
+    double denominator = dot(normal, ray.direction);
+    if (std::abs(denominator) < EPSILON) {
+        return false;
     }
+
+    // Calculate the intersection distance `t`
+    double t = (D - dot(normal, ray.origin)) / denominator;
+
+    // Ensure `t` is within the bounds
+    if (t < t_min || t > t_max) {
+        return false;
+    }
+    // Find the intersection point
+    double3 intersection = ray.origin + t * ray.direction;
+    double3 plane_hit_point = intersection - center;
+    //double3 local_intersection = mul(i_transform, double4(intersection, 1.0)).xyz();
+
+    // Calculate parameters `a` and `b` for the local intersection point
+
+    // currently testing a and b
+    double a = dot(w, cross(plane_hit_point, v));
+    double b = dot(w, cross(u, plane_hit_point));
+
+
+    // Check if `a` and `b` are within [0, 1] to confirm the intersection lies within the quad
+    if (a < 0 || a > 1 || b < 0 || b > 1) {
+        return false;
+    }
+
+    // Populate the hit information
+    hit->uv = double2(a, b);
+    hit->normal = dot(ray.direction, normal) < 0 ? normal : -normal;
+    hit->depth = t;
+    hit->position = intersection;
+
+    return true;
 }
 ```
 
-Object.cpp
-```
-//DOUBT: shouldnt there be some calculations to be made ??
-hit->normal = world_normal;
-```
 
 
 ### advancements and important parts
 #### functionnal
- - None
+ - Camera 
+ - sphere intersection
 
 #### Done ?
  - jittery camera

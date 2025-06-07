@@ -83,12 +83,9 @@ void Raytracer::render(const Scene& scene, Frame* output)
 	double3 delta_u = viewport_u / scene.resolution[0];
 	double3 delta_v = viewport_v / scene.resolution[1];
 
-	//image dimension
-	double image_width = viewport_width;
-	double image_height = viewport_height;
 	double3 image_center = lookfrom - (lookAt * focal_length);
 
-	double3 viewPort_upper_left = 
+	double3 viewport_lower_left = 
 		lookfrom
 	  - focal_length * lookAt
 	  - viewport_u / 2
@@ -119,13 +116,14 @@ void Raytracer::render(const Scene& scene, Frame* output)
 
 				// ray construction
 				double3 rayOrigin = lookfrom;
-				double3 rayDirection = normalize(
-					viewPort_upper_left 
+				double3 pixel_sample = 
+					viewport_lower_left 
 					+ x * delta_u * rCam 
 					+ y * delta_v * uCam 
 					+ (jitter.x * delta_u)
 					+ (jitter.y * delta_v)
-				);
+				;
+				double3 rayDirection = normalize(pixel_sample);
 
 				Ray ray = Ray(rayOrigin, rayDirection);
 
@@ -134,6 +132,7 @@ void Raytracer::render(const Scene& scene, Frame* output)
 				average_color += color;
 				average_z_depth += depth;
 			}
+
 
 			average_color = average_color / scene.samples_per_pixel;
 			average_z_depth = average_z_depth / scene.samples_per_pixel;
@@ -172,7 +171,7 @@ void Raytracer::trace(const Scene& scene,
 	if(scene.container->intersect(ray, EPSILON, scene.camera.z_far, &hit)) {		
 		//*out_color += material.color_albedo;
 		Material material = ResourceManager::Instance()->materials[hit.key_material];
-		*out_color   = material.color_albedo;
+		*out_color   = hit.normal;
 		*out_z_depth = hit.depth; 
 
 

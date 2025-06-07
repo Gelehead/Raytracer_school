@@ -173,7 +173,7 @@ public:
     //Rayon de la sphère
     double radius;
     double3 center = {0,0,0};
-    double3 world_center = mul(transform, {0,0,0,1}).xyz();
+    double3 world_center = double3{0,0,0};
 
     Sphere(double r) : radius(r) {};
 
@@ -196,22 +196,24 @@ public:
     Quad(double s) : half_size(s){};
 
     // can extract the equation from the normal and a point on the plane
-    double3 world_center = normalize(mul(transform, {0,0,0,1}).xyz());
+    double3 center = mul(transform, double4{0,0,0,1}).xyz();
 
     // u and v plane vector
-    double3 local_u = {0,0,half_size};
-    double3 world_u = normalize(mul(transform, {local_u.x, local_u.y, local_u.z, 1}).xyz());
-
-    double3 local_v = {half_size,0,0};
-    double3 world_v = normalize(mul(transform, {local_v.x, local_v.y, local_v.z, 1}).xyz());
-
-    double3 n = cross(local_u, local_v);
-    double3 local_normal = normalize(n);
-    double3 world_normal = normalize(mul(transform, {local_normal.x, local_normal.y, local_normal.z, 1}).xyz());
+    double3 u = double3{0,0,2*half_size};
+    double3 v = double3{2*half_size,0,0};
+    double3 n = cross(u, v);
+    double3 normal = normalize(n);
 
     // constant used for local calculations
-    double3 w = n / dot(n, n);
+    double3 w = normal / dot(normal, normal);
 
+
+
+    // deprecated : doesnt seem that useful
+
+    //double3 world_v = normalize(mul(transform, double4{local_v, 1.0}).xyz());
+    //double3 world_u = normalize(mul(transform, double4{local_u, 1.0}).xyz());
+    //double3 world_normal = mul(n_transform, local_normal);
 
     //À adapter pour le plan
     virtual AABB compute_aabb();

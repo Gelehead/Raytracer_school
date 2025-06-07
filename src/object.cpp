@@ -16,7 +16,7 @@ int rsign(double value, double v0, double v1) {
 bool Sphere::local_intersect(Ray ray, double t_min, double t_max, Intersection *hit) 
 {
     // Sphere centered at (0,0,0) in local space, ray origin transformed to local space.
-    double3 oc = -ray.origin;
+    double3 oc = center-ray.origin;
 
     double a = dot(ray.direction, ray.direction);
     double b = -2.0 * dot(ray.direction, oc);
@@ -67,49 +67,20 @@ AABB Sphere::compute_aabb() {
 //
 // Pour plus de d'informations sur la géométrie, référez-vous à la classe object.h.
 bool Quad::local_intersect(Ray ray, double t_min, double t_max, Intersection *hit) {
-    
-    // Verify if ray hits infinite plane
-    // D is Ax + By + Cz = D
-    double D = dot(world_center, world_normal);
+    double denom = dot(normal, ray.direction);
+    if (denom > EPSILON){
+        double t = dot((center - ray.origin), normal) / denom;
 
-    // handling division by 0
-    double denominator = dot(world_normal, ray.direction);
-    if ( std::abs(denominator) < EPSILON){
-        return false;
-    }
+        // abcd
+        double3 A = mul(i_transform, double4{})
 
-    double t = (D - dot(world_normal, ray.origin))
-                / denominator
-    ;
+        hit->normal = normal;
+        hit->depth = t;
+        hit->position = ray.origin + t * ray.direction;
 
-    // verify not OOB
-    if (!t < t_min || t > t_max){
-        return false;
-    }
-
-    // verify if the point is inside the half size of the quad
-    double3 intersection = ray.origin + t * ray.origin;
-    double3 local_intersection = intersection - world_center;
-    
-    // a, b e [0,1]
-    double a = dot(w, cross(local_intersection, local_v));
-    double b = dot(w, cross(local_u, local_intersection));
-    if (!inside(a, b, hit))
-
-    hit->normal = world_normal;
-    hit->depth = t;
-    hit->position = intersection;
-
-    // Calculate the intersection point in local space to check within bounds
-    double3 local_hit_pos = mul(i_transform, {hit->position, 1.0}).xyz();
-
-
-    if (std::abs(local_hit_pos.x) > half_size || std::abs(local_hit_pos.y) > half_size) {
-        return false; 
-    }
-
-    hit->normal = world_normal;
-    return true;
+        return (t >= 0);
+    } 
+    return false;
 }
 
 
@@ -157,9 +128,67 @@ AABB Quad::compute_aabb() {
 // Référez-vous au PDF pour la paramétrisation des coordonnées UV.
 //
 // Pour plus de d'informations sur la géométrie, référez-vous à la classe object.h.
-bool Cylinder::local_intersect(Ray ray, double t_min, double t_max, Intersection *hit)
-{
-    return false;
+bool Cylinder::local_intersect(Ray ray, double t_min, double t_max, Intersection *hit) {
+    // Cylinder centered at the origin, aligned along the y-axis, with radius and half-height
+    double radius_squared = radius * radius;
+
+    // Decompose ray origin and direction for convenience
+    double ox = ray.origin.x;
+    double oz = ray.origin.z;
+    double dx = ray.direction.x;
+    double dz = ray.direction.z;
+    
+    // Intersection with infinite cylinder's side (ignoring y-bounds)
+    double a = dx * dx + dz * dz;
+    double b = 2 * (ox * dx + oz * dz);
+    double c = ox * ox + oz * oz - radius_squared;
+
+    // Solve the quadratic equation a*t^2 + b*t + c = 0
+    double discriminant = b * b - 4 * a * c;
+    if (discriminant < 0) return false; // No real roots; ray misses cylinder
+
+    double sqrt_disc = std::sqrt(discriminant);
+    double t1 = (-b - sqrt_disc) / (2 * a);
+    double t2 = (-b + sqrt_disc) / (2 * a);
+
+    // Ensure t1 is the smaller root
+    if (t1 > t2) std::swap(t1, t2);
+
+    // Check if intersections with the cylinder's side are within y bounds
+    double y1 = ray.origin.y + t1 * ray.direction.y;
+    if (contains(-half_height, half_height, y1) && contains(t_min, t_max, t1)) {
+        hit->depth = t1;
+        hit->position = ray.origin + t1 * ray.direction;
+        hit->normal = normalize(double3(hit->position.x, 0, hit->position.z));
+        return true;
+    }
+
+    double y2 = ray.origin.y + t2 * ray.direction.y;
+    if (contains(-half_height, half_height, y2) && contains(t_min, t_max, t2)) {
+        hit->depth = t2;
+        hit->position = ray.origin + t2 * ray.direction;
+        hit->normal = normalize(double3(hit->position.x, 0, hit->position.z));
+        return true;
+    }
+
+    // Intersections with the caps
+    double3 cap_normal = double3(0, 1, 0);
+    for (int i = -1; i <= 1; i += 2) { // i = -1 for bottom cap, i = 1 for top cap
+        double y_cap = i * half_height;
+        double t_cap = (y_cap - ray.origin.y) / ray.direction.y;
+
+        if (contains(t_min, t_max, t_cap)) {
+            double3 point = ray.origin + t_cap * ray.direction;
+            if ((point.x * point.x + point.z * point.z) < radius*radius) {
+                hit->depth = t_cap;
+                hit->position = point;
+                hit->normal = i * cap_normal;
+                return true;
+            }
+        }
+    }
+
+    return false; // No valid intersection
 }
 
 // @@@@@@ VOTRE CODE ICI

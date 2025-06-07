@@ -1,7 +1,6 @@
 #pragma once
 
 #include "linalg/linalg.h"
-#include "object.h"
 #include <string>
 #include <iostream>
 using namespace linalg::aliases;
@@ -14,10 +13,6 @@ using namespace linalg::aliases;
 // ----------------------- vector part ----------------------- 
 static double length_squared(double3 u){
 	return u.x * u.x + u.y * u.y + u.z * u.z;
-}
-
-static void print_double3(double3 d){
-	std::cout << "(" << d.x << ", " << d.y << ", " << d.z << ")" << std::endl;
 }
 
 static double dot(double3 u, double3 v){
@@ -34,20 +29,34 @@ static double3 le_cross(const double3& a, const double3& b) {
 
 // ----------------------- utils -----------------------
 
-static void print(double a){
-	std::cout << a << std::endl;
+static void print(double d){
+	std::cout << d << std::endl;
 }
-static void print(int a){
-	std::cout << a << std::endl;
+static void print(int d){
+	std::cout << d << std::endl;
+}
+static void print(double3 d){
+	std::cout << "(" << d.x << ", " << d.y << ", " << d.z << ")" << std::endl;
+}
+static void print(double4 d){
+	std::cout << "(" << d.x << ", " << d.y << ", " << d.z << ", " << d.w << ")" << std::endl;
+}
+static void print(double4x4 t){
+	for (int i = 0; i < 4; i++)
+	{
+		double4 d = t.row(i);
+		print(d);
+	}
 }
 static bool contains(double min, double max, double x){
 	return x >= min && x <= max;
 }
-static bool inside(double a, double b, Intersection& hit){
-	if (!contains(0, 1, a) || !contains(0, 1, b)){return false;}
 
-	hit.uv = {a, b};
-	return true;
+static bool is_interior(double a, double b) {
+    // verifies if both a and b are within the [0,1] range
+    if (!contains(0, 1, a) || !contains(0, 1, b))
+        return false;
+    return true;
 }
 
 // ----------------------- random part -----------------------
